@@ -1,4 +1,3 @@
-import React from 'react';
 import { Star, Clock, TrendingUp, CheckCircle, MessageCircle, Heart, BookOpen } from 'lucide-react';
 import { Material } from '../types';
 

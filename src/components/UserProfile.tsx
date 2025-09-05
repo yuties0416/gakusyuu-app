@@ -1,17 +1,18 @@
-import React from 'react';
-import { Clock, BookOpen, TrendingUp, Award, Calendar, Target } from 'lucide-react';
+import { Clock, BookOpen, TrendingUp, Award, Calendar, Target, User, GraduationCap } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { User as AppUser } from '../types';
 
-export function UserProfile() {
+export function UserProfile({ userOverride }: { userOverride?: AppUser }) {
   const { user } = useAuth();
+  const viewingUser = userOverride ?? user;
 
-  if (!user) return null;
+  if (!viewingUser) return null;
 
   const stats = [
     { icon: BookOpen, label: '投稿数', value: '12', color: 'text-blue-600' },
     { icon: Clock, label: '総学習時間', value: '284h', color: 'text-green-600' },
     { icon: TrendingUp, label: '平均評価', value: '4.8', color: 'text-yellow-600' },
-    { icon: Award, label: 'ポイント', value: user.points.toString(), color: 'text-purple-600' },
+    { icon: Award, label: 'ポイント', value: viewingUser.points.toString(), color: 'text-purple-600' },
   ];
 
   return (
@@ -24,15 +25,15 @@ export function UserProfile() {
               <User className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">{user.name}</h2>
+              <h2 className="text-2xl font-bold text-white">{viewingUser.name}</h2>
               <div className="flex items-center space-x-3 mt-1">
                 <span
                   className="px-3 py-1 rounded-full text-sm font-medium text-white"
-                  style={{ backgroundColor: user.rank.color }}
+                  style={{ backgroundColor: viewingUser.rank.color }}
                 >
-                  {user.rank.name}
+                  {viewingUser.rank.name}
                 </span>
-                <span className="text-blue-100">{user.points} ポイント</span>
+                <span className="text-blue-100">{viewingUser.points} ポイント</span>
               </div>
             </div>
           </div>
@@ -48,11 +49,14 @@ export function UserProfile() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">学年:</span>
-                  <span className="font-medium">{user.grade}</span>
+                  <span className="font-medium">{viewingUser.grade}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">登録日:</span>
-                  <span className="font-medium">{user.createdAt.toLocaleDateString('ja-JP')}</span>
+                  <span className="font-medium">{(() => {
+                    const date = typeof viewingUser.createdAt === 'string' ? new Date(viewingUser.createdAt) : viewingUser.createdAt;
+                    return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('ja-JP');
+                  })()}</span>
                 </div>
               </div>
             </div>
@@ -63,7 +67,7 @@ export function UserProfile() {
                 <span>志望校</span>
               </h3>
               <div className="space-y-1">
-                {user.targetSchools.map((school, index) => (
+                {viewingUser.targetSchools.map((school, index) => (
                   <span
                     key={index}
                     className="inline-block bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-sm mr-1 mb-1"

@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
+import { useMaterials } from '../contexts/MaterialsContext';
+import { useAuth } from '../contexts/AuthContext';
+import { Material } from '../types';
 import { Upload, X, Star, Camera, Plus } from 'lucide-react';
 
 export function PostMaterial() {
+  const { addMaterial } = useMaterials();
+  const { user } = useAuth();
+  // navigation is handled by parent via onNavigate; we will dispatch a custom event
   const [formData, setFormData] = useState({
     title: '',
     author: '',
@@ -40,12 +46,58 @@ export function PostMaterial() {
 
   const subjects = ['数学', '英語', '国語', '理科', '社会'];
   const levels = ['基礎', '標準', '応用', '難関'];
-  const materialTypes = ['参考書', '問題集', '過去問', 'オンライン教材', 'アプリ'];
+  
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would submit the form data
-    console.log('Form submitted:', formData);
+    if (!user) return;
+    const newMaterial: Material = {
+      id: String(Date.now()),
+      userId: user.id,
+      user,
+      title: formData.title,
+      author: formData.author,
+      publisher: formData.publisher,
+      price: Number(formData.price || 0),
+      isbn: formData.isbn || undefined,
+      subject: formData.subject,
+      subCategory: formData.subCategory || '',
+      targetLevel: formData.targetLevel,
+      materialType: formData.materialType,
+      images: uploadedImages,
+      usagePeriod: {
+        startDate: formData.usageStartDate ? new Date(formData.usageStartDate) : new Date(),
+        endDate: formData.usageEndDate ? new Date(formData.usageEndDate) : new Date(),
+      },
+      totalStudyHours: Number(formData.totalStudyHours || 0),
+      pagesStudied: Number(formData.pagesStudied || 0),
+      completionRate: Number(formData.completionRate || 0),
+      performanceData: {
+        beforeScore: Number(formData.beforeScore || 0),
+        afterScore: Number(formData.afterScore || 0),
+        beforeDeviation: Number(formData.beforeDeviation || 0),
+        afterDeviation: Number(formData.afterDeviation || 0),
+      },
+      ratings: {
+        understanding: ratings.understanding,
+        quality: ratings.quality,
+        value: ratings.value,
+        recommendation: ratings.recommendation,
+      },
+      review: formData.review,
+      pros: pros.filter(p => p.trim().length > 0),
+      cons: cons.filter(c => c.trim().length > 0),
+      tips: formData.tips,
+      recommendedFor: formData.recommendedFor,
+      tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
+      likes: 0,
+      comments: [],
+      verified: false,
+      createdAt: new Date(),
+    };
+    addMaterial(newMaterial);
+    // ページ遷移（親のAppのonNavigateをトリガ）
+    window.dispatchEvent(new CustomEvent('navigate', { detail: { page: 'materials' } }));
     alert('教材を投稿しました！');
   };
 

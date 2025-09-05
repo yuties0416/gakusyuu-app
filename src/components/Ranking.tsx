@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Crown, Medal, Trophy, User, TrendingUp, Clock, BookOpen, Award } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -146,9 +146,9 @@ export function Ranking() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2">
                         <span className={`font-medium ${isCurrentUser ? 'text-blue-900' : 'text-gray-900'}`}>
-                          {typeof item.user === 'string' ? item.user : item.user.name}
+                          {typeof item.user === 'string' ? item.user : (item.user?.name ?? '')}
                         </span>
-                        {typeof item.user === 'object' && (
+                        {item.user && typeof item.user === 'object' && (
                           <span
                             className="px-2 py-1 rounded-full text-xs font-medium text-white"
                             style={{ backgroundColor: item.user.rank.color }}
@@ -157,7 +157,7 @@ export function Ranking() {
                           </span>
                         )}
                       </div>
-                      {typeof item.user === 'object' && (
+                      {item.user && typeof item.user === 'object' && (
                         <p className="text-xs text-gray-500">{item.user.grade}</p>
                       )}
                     </div>

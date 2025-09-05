@@ -1,5 +1,4 @@
-import React from 'react';
-import { Search, User, BookOpen, Clock, Star, MessageCircle, Crown } from 'lucide-react';
+import { Search, User, BookOpen, Clock, Star, MessageCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface NavbarProps {
@@ -21,10 +20,10 @@ export function Navbar({ onNavigate, currentPage }: NavbarProps) {
   return (
     <nav className="bg-white border-b border-gray-200 px-4 py-3">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <BookOpen className="h-8 w-8 text-blue-600" />
-          <h1 className="text-xl font-bold text-gray-900">学習教材シェア</h1>
-        </div>
+        <button onClick={() => onNavigate('dashboard')} className="flex items-center space-x-2 group">
+          <BookOpen className="h-8 w-8 text-blue-600 group-hover:scale-105 transition-transform" />
+          <span className="text-xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors">学習教材シェア</span>
+        </button>
 
         <div className="hidden md:flex items-center space-x-6">
           {navItems.map(({ id, label, icon: Icon }) => (
@@ -45,12 +44,7 @@ export function Navbar({ onNavigate, currentPage }: NavbarProps) {
 
         {user && (
           <div className="flex items-center space-x-3">
-            {user.isPremium && (
-              <div className="flex items-center space-x-1 px-2 py-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full text-white text-xs font-medium">
-                <Crown className="h-3 w-3" />
-                <span>プレミアム</span>
-              </div>
-            )}
+            {/* プレミアム機能は廃止 */}
             <div className="flex items-center space-x-2">
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">{user.name}</p>

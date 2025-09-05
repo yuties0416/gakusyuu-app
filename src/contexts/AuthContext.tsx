@@ -52,7 +52,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subjects: ['数学', '英語', '国語'],
       points: 750,
       rank: getRankFromPoints(750),
-      isPremium: false,
       createdAt: new Date(),
     };
     setUser(mockUser);
@@ -71,7 +70,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subjects: userData.subjects || [],
       points: 0,
       rank: getRankFromPoints(0),
-      isPremium: false,
       createdAt: new Date(),
     };
     setUser(newUser);

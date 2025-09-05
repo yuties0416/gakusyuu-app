@@ -7,7 +7,7 @@ export interface User {
   subjects: string[];
   rank: UserRank;
   points: number;
-  isPremium: boolean;
+  // プレミアム機能廃止に伴いフラグ削除
   avatar?: string;
   createdAt: Date;
 }

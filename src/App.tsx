@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { AuthForm } from './components/AuthForm';
+import { Landing } from './components/Landing';
 import { Navbar } from './components/Navbar';
 import { Dashboard } from './components/Dashboard';
 import { MaterialsList } from './components/MaterialsList';
@@ -10,13 +10,36 @@ import { UserProfile } from './components/UserProfile';
 import { MaterialDetail } from './components/MaterialDetail';
 import { Ranking } from './components/Ranking';
 import { Community } from './components/Community';
-import { mockMaterials } from './mockData';
+import { MaterialsProvider, useMaterials } from './contexts/MaterialsContext';
 import { Material } from './types';
+import { useEffect } from 'react';
+import { mockMaterials } from './mockData';
 
 function AppContent() {
   const { user, loading } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { page?: string; userId?: string };
+      if (detail?.page) {
+        if (detail.page === 'profile' && detail.userId) {
+          const allUsers = new Map<string, any>();
+          // collect users from materials provider or mockMaterials
+          mockMaterials.forEach(m => allUsers.set(m.user.id, m.user));
+          const target = allUsers.get(detail.userId) || null;
+          if (target) {
+            // store temporarily to window for simplicity
+            (window as any).__profile_user__ = target;
+          }
+        }
+        setCurrentPage(detail.page);
+      }
+    };
+    window.addEventListener('navigate' as any, handler as any);
+    return () => window.removeEventListener('navigate' as any, handler as any);
+  }, []);
 
   if (loading) {
     return (
@@ -30,7 +53,7 @@ function AppContent() {
   }
 
   if (!user) {
-    return <AuthForm />;
+    return <Landing />;
   }
 
   const handleMaterialClick = (material: Material) => {
@@ -43,12 +66,14 @@ function AppContent() {
     // Here you would save the study session to the database
   };
 
+  const { materials } = useMaterials();
+
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'dashboard':
         return <Dashboard onNavigate={setCurrentPage} />;
       case 'materials':
-        return <MaterialsList materials={mockMaterials} onMaterialClick={handleMaterialClick} />;
+        return <MaterialsList materials={materials} onMaterialClick={handleMaterialClick} />;
       case 'post':
         return <PostMaterial />;
       case 'timer':
@@ -62,7 +87,7 @@ function AppContent() {
       case 'community':
         return <Community />;
       case 'profile':
-        return <UserProfile />;
+        return <UserProfile userOverride={(window as any).__profile_user__} />;
       case 'material-detail':
         return selectedMaterial ? (
           <MaterialDetail 
@@ -88,7 +113,9 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <MaterialsProvider>
+        <AppContent />
+      </MaterialsProvider>
     </AuthProvider>
   );
 }

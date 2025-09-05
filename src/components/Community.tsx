@@ -1,8 +1,15 @@
-import React, { useState } from 'react';
-import { MessageSquare, TrendingUp, Clock, Users, Plus, ThumbsUp, MessageCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { MessageSquare, TrendingUp, Clock, Users, Plus, ThumbsUp, MessageCircle, User } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export function Community() {
   const [activeSection, setActiveSection] = useState('discussions');
+  const { user } = useAuth();
+  const [showComposer, setShowComposer] = useState(false);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+
+  const STORAGE_KEY = 'community_topics_v1';
 
   const sections = [
     { id: 'discussions', label: '勉強法相談', icon: MessageSquare },
@@ -10,7 +17,7 @@ export function Community() {
     { id: 'success-stories', label: '合格体験談', icon: Users },
   ];
 
-  const discussionTopics = [
+  const [discussionTopics, setDiscussionTopics] = useState<any[]>([
     {
       id: 1,
       title: '数学の勉強法で悩んでいます',
@@ -43,9 +50,9 @@ export function Community() {
       timeAgo: '1日前',
       preview: '入試本番で時間が足りなくなってしまいます。どうやって読解スピードを...',
     },
-  ];
+  ]);
 
-  const schoolTopics = [
+  const [schoolTopics, setSchoolTopics] = useState<any[]>([
     {
       id: 1,
       title: '東京大学 理科一類 2024年合格',
@@ -67,7 +74,54 @@ export function Community() {
       timeAgo: '1日前',
       preview: '早稲田商学部を目指している方へ、おすすめの教材と対策法をまとめました',
     },
-  ];
+  ]);
+
+  useEffect(() => {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.discussions) setDiscussionTopics((prev) => [...parsed.discussions, ...prev]);
+        if (parsed.schools) setSchoolTopics((prev) => [...parsed.schools, ...prev]);
+      } catch {}
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const persist = (discussions: any[], schools: any[]) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ discussions, schools }));
+  };
+
+  const handleCreate = () => {
+    if (!title.trim() || !content.trim()) return;
+    const base = {
+      id: Date.now(),
+      title: title.trim(),
+      author: user?.name ?? '匿名ユーザー',
+      userId: user?.id,
+      replies: 0,
+      likes: 0,
+      timeAgo: 'たった今',
+      preview: content.trim().slice(0, 80),
+      isHot: false,
+    };
+    if (activeSection === 'discussions') {
+      const next = [{ ...base, category: '勉強法相談' }, ...discussionTopics];
+      setDiscussionTopics(next);
+      persist(next, schoolTopics);
+    } else if (activeSection === 'schools') {
+      const next = [{ ...base, category: '志望校対策' }, ...schoolTopics];
+      setSchoolTopics(next);
+      persist(discussionTopics, next);
+    } else {
+      const next = [{ ...base, category: '合格体験談' }, ...schoolTopics];
+      setSchoolTopics(next);
+      persist(discussionTopics, next);
+    }
+    setShowComposer(false);
+    setTitle('');
+    setContent('');
+  };
 
   const getCurrentTopics = () => {
     switch (activeSection) {
@@ -117,11 +171,39 @@ export function Community() {
 
       {/* New post button */}
       <div className="flex justify-end">
-        <button className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+        <button onClick={() => setShowComposer(true)} className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
           <Plus className="h-4 w-4" />
           <span>新規投稿</span>
         </button>
       </div>
+
+      {showComposer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-lg p-6 space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">新規投稿を作成</h3>
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="タイトル"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+              <textarea
+                rows={5}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="内容を入力..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            </div>
+            <div className="flex items-center justify-end space-x-2 pt-2">
+              <button onClick={() => setShowComposer(false)} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">キャンセル</button>
+              <button onClick={handleCreate} className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">投稿する</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Topics list */}
       <div className="space-y-4">
@@ -131,9 +213,17 @@ export function Community() {
             className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 hover:shadow-md transition-all duration-300 cursor-pointer group"
           >
             <div className="flex items-start space-x-4">
-              <div className="bg-gray-100 rounded-full p-3 group-hover:bg-green-100 transition-colors">
-                <MessageSquare className="h-5 w-5 text-gray-600 group-hover:text-green-600" />
-              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.dispatchEvent(new CustomEvent('navigate', { detail: { page: 'profile', userId: (topic as any).userId || undefined } }));
+                }}
+                className="bg-gray-100 rounded-full p-3 hover:bg-green-100 transition-colors"
+                title="プロフィールを見る"
+              >
+                <User className="h-5 w-5 text-gray-600 hover:text-green-600" />
+              </button>
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-center space-x-2 mb-2">

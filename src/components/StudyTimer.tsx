@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Play, Pause, Square, Clock } from 'lucide-react';
 
 interface StudyTimerProps {
@@ -13,7 +13,7 @@ export function StudyTimer({ onSessionComplete }: StudyTimerProps) {
   const subjects = ['数学', '英語', '国語', '理科', '社会', 'その他'];
 
   useEffect(() => {
-    let interval: number;
+    let interval: NodeJS.Timeout | undefined;
     if (isRunning) {
       interval = setInterval(() => {
         setSeconds(s => s + 1);

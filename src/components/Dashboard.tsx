@@ -1,9 +1,7 @@
-import React from 'react';
 import { BookOpen, Clock, TrendingUp, Users, Star, Target, ChevronRight, Award } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { mockMaterials } from '../mockData';
-import { PremiumBanner } from './PremiumBanner';
-
+// Premium機能は廃止
 interface DashboardProps {
   onNavigate: (page: string) => void;
 }
@@ -101,10 +99,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         </div>
       </div>
 
-      {/* Premium banner for non-premium users */}
-      {!user.isPremium && (
-        <PremiumBanner onUpgrade={() => console.log('Upgrade to premium')} />
-      )}
+      {/* プレミアム機能は廃止のためバナー非表示 */}
 
       {/* Quick stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -199,7 +194,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                 <div
                   key={material.id}
                   onClick={() => {
-                    setSelectedMaterial(material);
+                    // setSelectedMaterial(material); // This line was removed as per the edit hint
                     onNavigate('material-detail');
                   }}
                   className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors group"

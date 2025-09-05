@@ -10,7 +10,6 @@ const mockUsers: User[] = [
     subjects: ['数学', '英語'],
     rank: { level: 'dedicated', name: '努力家', color: '#8B5CF6', minPoints: 501 },
     points: 750,
-    isPremium: true,
     createdAt: new Date('2024-01-15'),
   },
   {
@@ -22,7 +21,6 @@ const mockUsers: User[] = [
     subjects: ['英語', '国語'],
     rank: { level: 'learner', name: '学習者', color: '#3B82F6', minPoints: 101 },
     points: 320,
-    isPremium: false,
     createdAt: new Date('2024-02-01'),
   },
 ];
