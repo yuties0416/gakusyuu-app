@@ -1,6 +1,7 @@
 import { BookOpen, Clock, TrendingUp, Users, Star, Target, ChevronRight, Award } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { mockMaterials } from '../mockData';
+import { useMaterials } from '../contexts/MaterialsContext';
 // Premium機能は廃止
 interface DashboardProps {
   onNavigate: (page: string) => void;
@@ -8,13 +9,35 @@ interface DashboardProps {
 
 export function Dashboard({ onNavigate }: DashboardProps) {
   const { user } = useAuth();
+  const { materials } = useMaterials();
 
   if (!user) return null;
 
   const recentMaterials = mockMaterials.slice(0, 3);
-  const totalStudyHours = 127; // Mock data
-  const thisWeekHours = 18;
-  const avgImprovement = 15.2;
+
+  const readSessions = () => {
+    if (!user) return [] as Array<{ duration: number; subject: string; at: string }>;
+    const raw = localStorage.getItem(`study_sessions_${user.id}`);
+    return raw ? (JSON.parse(raw) as Array<{ duration: number; subject: string; at: string }>) : [];
+  };
+
+  const sessions = readSessions();
+  const totalStudyMinutes = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+  const totalStudyHours = Math.round((totalStudyMinutes / 60) * 10) / 10;
+  const weekStart = (() => { const d = new Date(); const day = d.getDay(); const diff = d.getDate() - day + (day === 0 ? -6 : 1); return new Date(d.setDate(diff)); })();
+  const thisWeekMinutes = sessions
+    .filter(s => new Date(s.at) >= weekStart)
+    .reduce((sum, s) => sum + (s.duration || 0), 0);
+  const thisWeekHours = Math.round((thisWeekMinutes / 60) * 10) / 10;
+
+  // 成績向上: ログインユーザーの投稿のみ対象
+  const myMaterials = materials.filter(m => m.userId === user?.id);
+  const improvements: number[] = myMaterials
+    .map(m => (m.performanceData?.afterScore || 0) - (m.performanceData?.beforeScore || 0))
+    .filter(v => !Number.isNaN(v));
+  const avgImprovement = improvements.length
+    ? Math.round((improvements.reduce((a, b) => a + b, 0) / improvements.length) * 10) / 10
+    : 0;
 
   const quickActions = [
     { 

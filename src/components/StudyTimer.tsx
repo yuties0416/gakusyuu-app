@@ -7,7 +7,7 @@ interface StudyTimerProps {
 }
 
 export function StudyTimer({ onSessionComplete }: StudyTimerProps) {
-  const { awardPoints } = useAuth();
+  const { awardPoints, logStudySession } = useAuth();
   const [isRunning, setIsRunning] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [selectedSubject, setSelectedSubject] = useState('数学');
@@ -36,9 +36,11 @@ export function StudyTimer({ onSessionComplete }: StudyTimerProps) {
   const handleStop = () => {
     setIsRunning(false);
     if (seconds > 0) {
-      onSessionComplete(Math.floor(seconds / 60), selectedSubject);
-      // 学習1分あたり1pt加算（上限は任意で調整可）
-      awardPoints(Math.floor(seconds / 60), 'study session');
+      const minutes = Math.floor(seconds / 60);
+      onSessionComplete(minutes, selectedSubject);
+      // ログとポイント付与
+      logStudySession(minutes, selectedSubject);
+      awardPoints(minutes, 'study session');
     }
     setSeconds(0);
   };

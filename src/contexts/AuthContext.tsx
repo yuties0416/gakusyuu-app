@@ -9,6 +9,7 @@ interface AuthContextType {
   register: (userData: Partial<User> & { password: string }) => Promise<void>;
   loading: boolean;
   awardPoints: (points: number, reason?: string) => void;
+  logStudySession: (durationMinutes: number, subject: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -79,6 +80,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       users[idx] = { ...users[idx], points: updatedPoints, rank: updatedUser.rank };
       writeUsers(users);
     }
+  };
+
+  const logStudySession = (durationMinutes: number, subject: string) => {
+    if (!user) return;
+    const key = `study_sessions_${user.id}`;
+    const raw = localStorage.getItem(key);
+    const list: Array<{ duration: number; subject: string; at: string }> = raw ? JSON.parse(raw) : [];
+    list.push({ duration: Math.max(0, Math.floor(durationMinutes)), subject, at: new Date().toISOString() });
+    localStorage.setItem(key, JSON.stringify(list));
   };
 
   useEffect(() => {
@@ -176,7 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, loading, awardPoints }}>
+    <AuthContext.Provider value={{ user, login, logout, register, loading, awardPoints, logStudySession }}>
       {children}
     </AuthContext.Provider>
   );
