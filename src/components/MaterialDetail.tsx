@@ -188,9 +188,13 @@ export function MaterialDetail({ material, onBack }: MaterialDetailProps) {
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             <h3 className="font-semibold text-gray-900 mb-4">投稿者</h3>
             <div className="flex items-center space-x-3 mb-4">
-              <div className="bg-gray-200 rounded-full p-3">
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: { page: 'profile', userId: material.user.id, user: material.user } }))}
+                className="bg-gray-200 rounded-full p-3 hover:scale-105 transition-transform"
+                title="プロフィールを見る"
+              >
                 <User className="h-6 w-6 text-gray-600" />
-              </div>
+              </button>
               <div>
                 <p className="font-medium text-gray-900">{material.user.name}</p>
                 <div className="flex items-center space-x-2">
@@ -292,7 +296,10 @@ export function MaterialDetail({ material, onBack }: MaterialDetailProps) {
                 <span>シェア</span>
               </button>
               
-              <button className="w-full flex items-center justify-center space-x-2 py-3 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors">
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: { page: 'chat', chatTarget: material.user } }))}
+                className="w-full flex items-center justify-center space-x-2 py-3 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+              >
                 <MessageCircle className="h-5 w-5" />
                 <span>投稿者にメッセージ</span>
               </button>

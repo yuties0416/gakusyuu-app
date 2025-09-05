@@ -1,4 +1,4 @@
-import { Star, Clock, TrendingUp, CheckCircle, MessageCircle, Heart, BookOpen } from 'lucide-react';
+import { Star, Clock, TrendingUp, CheckCircle, MessageCircle, Heart, BookOpen, User as UserIcon } from 'lucide-react';
 import { Material } from '../types';
 
 interface MaterialCardProps {
@@ -40,8 +40,18 @@ export function MaterialCard({ material, onClick }: MaterialCardProps) {
           </div>
         )}
 
-        {/* User rank badge */}
-        <div className="absolute top-3 left-3">
+        {/* User rank badge + avatar tap */}
+        <div className="absolute top-3 left-3 flex items-center space-x-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              window.dispatchEvent(new CustomEvent('navigate', { detail: { page: 'profile', userId: material.user.id, user: material.user } }));
+            }}
+            className="bg-white/70 rounded-full p-1 hover:scale-105 transition-transform"
+            title={`${material.user.name}のプロフィールを見る`}
+          >
+            <UserIcon className="h-5 w-5 text-gray-700" />
+          </button>
           <div
             className="px-2 py-1 rounded-full text-xs font-medium text-white"
             style={{ backgroundColor: material.user.rank.color }}

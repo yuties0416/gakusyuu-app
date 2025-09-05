@@ -10,7 +10,9 @@ import { UserProfile } from './components/UserProfile';
 import { MaterialDetail } from './components/MaterialDetail';
 import { Ranking } from './components/Ranking';
 import { Community } from './components/Community';
+import { Chat } from './components/Chat';
 import { MaterialsProvider, useMaterials } from './contexts/MaterialsContext';
+import { useState as useStateReact } from 'react';
 import { Material } from './types';
 import { useEffect } from 'react';
 import { mockMaterials } from './mockData';
@@ -22,17 +24,25 @@ function AppContent() {
 
   useEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { page?: string; userId?: string };
+      const detail = (e as CustomEvent).detail as { page?: string; userId?: string; user?: any; chatTarget?: any };
       if (detail?.page) {
         if (detail.page === 'profile' && detail.userId) {
-          const allUsers = new Map<string, any>();
-          // collect users from materials provider or mockMaterials
-          mockMaterials.forEach(m => allUsers.set(m.user.id, m.user));
-          const target = allUsers.get(detail.userId) || null;
-          if (target) {
-            // store temporarily to window for simplicity
-            (window as any).__profile_user__ = target;
+          // 直接ユーザーが渡されていれば優先
+          const explicit = detail.user || null;
+          if (explicit) {
+            (window as any).__profile_user__ = explicit;
+          } else {
+            const allUsers = new Map<string, any>();
+            // collect users from materials provider or mockMaterials
+            mockMaterials.forEach(m => allUsers.set(m.user.id, m.user));
+            const target = allUsers.get(detail.userId) || null;
+            if (target) {
+              (window as any).__profile_user__ = target;
+            }
           }
+        }
+        if (detail.page === 'chat' && detail.chatTarget) {
+          (window as any).__chat_target__ = detail.chatTarget;
         }
         setCurrentPage(detail.page);
       }
@@ -94,6 +104,8 @@ function AppContent() {
         return <Ranking />;
       case 'community':
         return <Community />;
+      case 'chat':
+        return <Chat />;
       case 'profile':
         return <UserProfile userOverride={(window as any).__profile_user__} />;
       case 'material-detail':
