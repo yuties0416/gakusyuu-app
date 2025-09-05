@@ -1,17 +1,37 @@
 import { Clock, BookOpen, TrendingUp, Award, Calendar, Target, User, GraduationCap } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useMaterials } from '../contexts/MaterialsContext';
 import { User as AppUser } from '../types';
 
 export function UserProfile({ userOverride }: { userOverride?: AppUser }) {
   const { user } = useAuth();
   const viewingUser = userOverride ?? user;
+  const { materials } = useMaterials();
 
   if (!viewingUser) return null;
 
+  // 投稿数
+  const myMaterials = materials.filter(m => m.userId === viewingUser.id);
+  const postCount = myMaterials.length;
+
+  // 総学習時間（分を時間へ）
+  const sessionsKey = `study_sessions_${viewingUser.id}`;
+  const sessionsRaw = typeof window !== 'undefined' ? localStorage.getItem(sessionsKey) : null;
+  const sessions: Array<{ duration: number; subject: string; at: string }> = sessionsRaw ? JSON.parse(sessionsRaw) : [];
+  const totalMinutes = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+  const totalHours = Math.round((totalMinutes / 60) * 10) / 10;
+
+  // 平均評価（自身の投稿のratings平均）
+  const myRatings: number[] = myMaterials.map(m => {
+    const r = m.ratings;
+    return r ? (r.understanding + r.quality + r.value + r.recommendation) / 4 : 0;
+  }).filter(v => v > 0);
+  const avgRating = myRatings.length ? (myRatings.reduce((a,b)=>a+b,0) / myRatings.length) : 0;
+
   const stats = [
-    { icon: BookOpen, label: '投稿数', value: '12', color: 'text-blue-600' },
-    { icon: Clock, label: '総学習時間', value: '284h', color: 'text-green-600' },
-    { icon: TrendingUp, label: '平均評価', value: '4.8', color: 'text-yellow-600' },
+    { icon: BookOpen, label: '投稿数', value: String(postCount), color: 'text-blue-600' },
+    { icon: Clock, label: '総学習時間', value: `${totalHours}h`, color: 'text-green-600' },
+    { icon: TrendingUp, label: '平均評価', value: avgRating ? avgRating.toFixed(1) : '—', color: 'text-yellow-600' },
     { icon: Award, label: 'ポイント', value: viewingUser.points.toString(), color: 'text-purple-600' },
   ];
 
