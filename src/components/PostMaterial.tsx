@@ -6,7 +6,7 @@ import { Upload, X, Star, Camera, Plus } from 'lucide-react';
 
 export function PostMaterial() {
   const { addMaterial } = useMaterials();
-  const { user } = useAuth();
+  const { user, awardPoints } = useAuth();
   // navigation is handled by parent via onNavigate; we will dispatch a custom event
   const [formData, setFormData] = useState({
     title: '',
@@ -96,6 +96,8 @@ export function PostMaterial() {
       createdAt: new Date(),
     };
     addMaterial(newMaterial);
+    // 投稿ボーナス（例: 50pt）
+    awardPoints(50, 'post material');
     // ページ遷移（親のAppのonNavigateをトリガ）
     window.dispatchEvent(new CustomEvent('navigate', { detail: { page: 'materials' } }));
     alert('教材を投稿しました！');

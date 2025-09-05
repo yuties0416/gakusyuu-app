@@ -8,6 +8,7 @@ interface AuthContextType {
   logout: () => void;
   register: (userData: Partial<User> & { password: string }) => Promise<void>;
   loading: boolean;
+  awardPoints: (points: number, reason?: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -59,6 +60,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const digest = await crypto.subtle.digest('SHA-256', data);
     const bytes = Array.from(new Uint8Array(digest));
     return bytes.map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
+  const awardPoints = (points: number, _reason?: string) => {
+    if (!user) return;
+    const updatedPoints = Math.max(0, (user.points || 0) + Math.floor(points));
+    const updatedUser: User = {
+      ...user,
+      points: updatedPoints,
+      rank: getRankFromPoints(updatedPoints),
+    };
+    setUser(updatedUser);
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
+    // USERS にも反映
+    const users = readUsers();
+    const idx = users.findIndex(u => u.id === user.id);
+    if (idx !== -1) {
+      users[idx] = { ...users[idx], points: updatedPoints, rank: updatedUser.rank };
+      writeUsers(users);
+    }
   };
 
   useEffect(() => {
@@ -156,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, register, loading, awardPoints }}>
       {children}
     </AuthContext.Provider>
   );
