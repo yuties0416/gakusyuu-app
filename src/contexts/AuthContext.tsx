@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
+import { supabase } from '../utils/supabase/client';
 
 interface AuthContextType {
   user: User | null;
@@ -131,6 +132,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           })
         );
       } catch {}
+      // Supabase への登録記録（環境変数が設定されている場合のみ）
+      try {
+        if (import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY) {
+          await supabase.from('registrations').insert({
+            user_id: newUserBase.id,
+            email: newUserBase.email,
+            name: newUserBase.name,
+            created_at: new Date().toISOString(),
+          });
+        }
+      } catch (e) {
+        console.warn('Failed to log registration to Supabase', e);
+      }
     } finally {
       setLoading(false);
     }
