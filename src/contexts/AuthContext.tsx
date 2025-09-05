@@ -30,10 +30,38 @@ const getRankFromPoints = (points: number): User['rank'] => {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // ローカル保存用のユーザー型（パスワードハッシュを含む）
+  interface StoredUser extends User {
+    passwordHash: string;
+  }
+
+  const USERS_KEY = 'users';
+  const CURRENT_USER_KEY = 'user';
+
+  const readUsers = (): StoredUser[] => {
+    try {
+      const raw = localStorage.getItem(USERS_KEY);
+      return raw ? (JSON.parse(raw) as StoredUser[]) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const writeUsers = (users: StoredUser[]) => {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  };
+
+  const hashPassword = async (password: string): Promise<string> => {
+    const enc = new TextEncoder();
+    const data = enc.encode(password);
+    const digest = await crypto.subtle.digest('SHA-256', data);
+    const bytes = Array.from(new Uint8Array(digest));
+    return bytes.map(b => b.toString(16).padStart(2, '0')).join('');
+  };
 
   useEffect(() => {
-    // Simulate auth check
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem(CURRENT_USER_KEY);
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
@@ -42,44 +70,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     setLoading(true);
-    // Simulate API call
-    const mockUser: User = {
-      id: '1',
-      email,
-      name: '田中太郎',
-      grade: '高校3年',
-      targetSchools: ['東京大学', '早稲田大学'],
-      subjects: ['数学', '英語', '国語'],
-      points: 750,
-      rank: getRankFromPoints(750),
-      createdAt: new Date(),
-    };
-    setUser(mockUser);
-    localStorage.setItem('user', JSON.stringify(mockUser));
-    setLoading(false);
+    try {
+      const users = readUsers();
+      const candidate = users.find(u => u.email === email);
+      if (!candidate) {
+        throw new Error('メールまたはパスワードが正しくありません');
+      }
+      const passwordHash = await hashPassword(password);
+      if (candidate.passwordHash !== passwordHash) {
+        throw new Error('メールまたはパスワードが正しくありません');
+      }
+      const safeUser: User = {
+        id: candidate.id,
+        email: candidate.email,
+        name: candidate.name,
+        grade: candidate.grade,
+        targetSchools: candidate.targetSchools,
+        subjects: candidate.subjects,
+        points: candidate.points,
+        rank: candidate.rank,
+        createdAt: new Date(candidate.createdAt),
+      };
+      setUser(safeUser);
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(safeUser));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const register = async (userData: Partial<User> & { password: string }) => {
     setLoading(true);
-    const newUser: User = {
-      id: Date.now().toString(),
-      email: userData.email!,
-      name: userData.name!,
-      grade: userData.grade!,
-      targetSchools: userData.targetSchools || [],
-      subjects: userData.subjects || [],
-      points: 0,
-      rank: getRankFromPoints(0),
-      createdAt: new Date(),
-    };
-    setUser(newUser);
-    localStorage.setItem('user', JSON.stringify(newUser));
-    setLoading(false);
+    try {
+      const users = readUsers();
+      const exists = users.some(u => u.email === userData.email);
+      if (exists) {
+        throw new Error('このメールアドレスは既に使用されています');
+      }
+      const passwordHash = await hashPassword(userData.password);
+      const newUserBase: User = {
+        id: Date.now().toString(),
+        email: userData.email!,
+        name: userData.name!,
+        grade: userData.grade!,
+        targetSchools: userData.targetSchools || [],
+        subjects: userData.subjects || [],
+        points: 0,
+        rank: getRankFromPoints(0),
+        createdAt: new Date(),
+      };
+      const storedUser: StoredUser = { ...newUserBase, passwordHash };
+      const next = [...users, storedUser];
+      writeUsers(next);
+      setUser(newUserBase);
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUserBase));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('user');
+    localStorage.removeItem(CURRENT_USER_KEY);
   };
 
   return (
