@@ -154,7 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {}
       // Supabase への登録記録（環境変数が設定されている場合のみ）
       try {
-        if (import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY) {
+        if (supabase) {
           await supabase.from('registrations').insert({
             user_id: newUserBase.id,
             email: newUserBase.email,
