@@ -123,6 +123,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       writeUsers(next);
       setUser(newUserBase);
       localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUserBase));
+      // 新規登録通知（アプリ全体向け）
+      try {
+        window.dispatchEvent(
+          new CustomEvent('user:registered', {
+            detail: { id: newUserBase.id, email: newUserBase.email, name: newUserBase.name },
+          })
+        );
+      } catch {}
     } finally {
       setLoading(false);
     }

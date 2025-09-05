@@ -38,7 +38,15 @@ function AppContent() {
       }
     };
     window.addEventListener('navigate' as any, handler as any);
-    return () => window.removeEventListener('navigate' as any, handler as any);
+    const onRegistered = (e: Event) => {
+      const d = (e as CustomEvent).detail as { id: string; email: string; name: string };
+      alert(`新規アカウントが作成されました: ${d.name} (${d.email})`);
+    };
+    window.addEventListener('user:registered' as any, onRegistered as any);
+    return () => {
+      window.removeEventListener('navigate' as any, handler as any);
+      window.removeEventListener('user:registered' as any, onRegistered as any);
+    };
   }, []);
 
   if (loading) {
